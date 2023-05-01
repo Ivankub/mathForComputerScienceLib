@@ -147,22 +147,22 @@ class EttaTableCell():
     Args:
         etta_value (int): значение СВ "Етта"
         good_th (int): количество удачных исходов
-        bad_th (int): количество неудачных исходов
+        all_th (int): количество всех исходов
         probability (float): вероятность
 
     Methods:
         reset_probability
     """
-    def __init__(self, etta_value:int=0, good_th:int=1, bad_th:int=1, probability:float=None):
+    def __init__(self, etta_value:int=0, good_th:int=1, all_th:int=1, probability:float=None):
         self.etta_value = etta_value
         self.good_th = good_th
-        self.bad_th = bad_th
+        self.all_th = all_th
         self.probability = probability
         if self.probability == None:
             self.reset_probability()
 
     def reset_probability(self):
-        self.probability = self.good_th/(self.good_th+self.bad_th)
+        self.probability = self.good_th/self.all_th
 
 class EttaTable():
     """
@@ -329,7 +329,7 @@ def things_complexity_terminal():
     result = things_complexity_solution(humans)
     print("Таблица:")
     for cell in result.cells:
-        print(f"E = {cell.etta_value}; P = {cell.probability} ({cell.good_th}/{cell.bad_th})")
+        print(f"E = {cell.etta_value}; P = {cell.probability} ({cell.good_th}/{cell.all_th})")
 
 def things_complexity_solution(humans:int = 0):
     """
@@ -397,7 +397,7 @@ def things_complexity_request(text: str = None):
                 answer.append("Таблица:")
 
                 for cell in result.cells:
-                    answer.append(f"E = {cell.etta_value}; P = {cell.probability} ({cell.good_th}/{cell.bad_th})")
+                    answer.append(f"E = {cell.etta_value}; P = {cell.probability} ({cell.good_th}/{cell.all_th})")
                 return answer
             else:
                 return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
@@ -475,7 +475,7 @@ def geometric_meeting_request(text: str = None):
         except:
             return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
 
-def find_math_prediction_solution(table: EttaTable = None):
+def find_math_prediction_solution(table: EttaTable = None, degree: float = 1):
     """
     Нахождение МО по таблице значений случайных величин
 
@@ -490,7 +490,7 @@ def find_math_prediction_solution(table: EttaTable = None):
     else:
         matP = 0
         for cell in table.cells:
-            matP += cell.etta_value*cell.probability
+            matP += (cell.etta_value**degree)*cell.probability
         return matP
 
 def find_math_prediction_terminal():
@@ -502,7 +502,7 @@ def find_math_prediction_terminal():
     for i in range(0, n):
         v, p = map(int, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
         table.cells.append(EttaTableCell(etta_value=v, probability=p))
-    print(f"Me = {find_math_prediction_solution(table)}")
+    print(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {find_math_prediction_solution(table)}")
 
 def find_math_prediction_request(text: str = None):
     """
@@ -529,11 +529,126 @@ def find_math_prediction_request(text: str = None):
 
             answer = []
 
-            answer.append(f"Me = {find_math_prediction_solution(table)}")
+            answer.append(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {find_math_prediction_solution(table)}")
 
             return answer
         except:
             return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
 
-__all__ = ['combinations', 'buckets_n_balls_solution', 'buckets_n_balls_terminal', 'things_complexity_solution', 'things_complexity_terminal',
-'geometric_meeting_solution', 'geometric_meeting_terminal']
+def find_dispersion_solution(table: EttaTable):
+    """
+    Функция, считающая дисперсию для таблицы СВ
+
+    Args:
+        table (EttaTable): таблица СВ
+
+    Returns:
+        float: дисперсия СВ
+    """
+    if table != None:
+        summ = 0
+        math_prediction = find_math_prediction_solution(table, 1)
+        for cell in table.cells:
+            summ += (cell.etta_value - math_prediction)**2 * cell.probability
+        return summ
+
+def find_dispersion_terminal():
+    """
+    Функция, считающая дисперсию для таблицы СВ
+    """
+    n = int(input("Введите количество значений в таблице: "))
+    table = EttaTable()
+    for i in range(0, n):
+        v, p = map(int, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
+        table.cells.append(EttaTableCell(etta_value=v, probability=p))
+    print(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {find_dispersion_solution(table)}")
+
+def find_dispersion_request(text: str = None):
+    """
+    Нахождение дисперси СВ по таблице значений СВ
+
+    Args:
+        text (str): текст запроса, который может быть None или вводом пользователя
+    
+    Returns:
+        list: массив строчек ответа
+    """
+    if text == None:
+        return ["""Введите количество значений таблицы (число n)
+В следующих n строчках введите пары чисел: значение СВ, вероятность (любой разделитель, кроме точки)"""]
+    else:
+        try:
+            request = [float(parameter) for parameter in re.findall(regular_float, text)]
+
+            n = int(request[0])
+            table = EttaTable()
+
+            for i in range(0, n):
+                table.cells.append(EttaTableCell(etta_value=request[1+i*2], probability=request[2+i*2]))
+
+            answer = []
+
+            answer.append(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {find_dispersion_solution(table)}")
+
+            return answer
+        except:
+            return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
+
+def table_analysis_solution(table: EttaTable):
+    """
+    Находит Мx и Dx для таблицы значений СВ
+
+    Args:
+        table (EttaTable): таблица значений СВ
+
+    Returns:
+        list: [float, float] - массив со значениями Mx и Dx
+    """
+    mat_prediction = find_math_prediction_solution(table)
+    dispersion = find_dispersion_solution(table)
+
+    return [mat_prediction, dispersion]
+
+def table_analysis_terminal():
+    """
+    Функция, считающая дисперсию и математическое ожидание для таблицы СВ
+    """
+    n = int(input("Введите количество значений в таблице: "))
+    table = EttaTable()
+    for i in range(0, n):
+        v, p = map(int, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
+        table.cells.append(EttaTableCell(etta_value=v, probability=p))
+    result = table_analysis_solution(table)
+    print(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {result[0]}\nDx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {result[1]}")
+
+def table_analysis_request(text: str = None):
+    """
+    Нахождение дисперси и математического ожидания СВ по таблице значений СВ
+
+    Args:
+        text (str): текст запроса, который может быть None или вводом пользователя
+    
+    Returns:
+        list: массив строчек ответа
+    """
+    if text == None:
+        return ["""Введите количество значений таблицы (число n)
+В следующих n строчках введите пары чисел: значение СВ, вероятность (любой разделитель, кроме точки)"""]
+    else:
+        try:
+            request = [float(parameter) for parameter in re.findall(regular_float, text)]
+
+            n = int(request[0])
+            table = EttaTable()
+
+            for i in range(0, n):
+                table.cells.append(EttaTableCell(etta_value=request[1+i*2], probability=request[2+i*2]))
+
+            answer = []
+            result = table_analysis_solution(table)
+            answer.append(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {result[0]}")
+            answer.append(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {result[1]}")
+
+            return answer
+        except:
+            return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
