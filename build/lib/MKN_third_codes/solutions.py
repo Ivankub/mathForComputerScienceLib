@@ -1,4 +1,5 @@
 import math
+import re
 
 class Box():
     """
@@ -204,7 +205,8 @@ class Meetiner():
     def calculate_square(self, maxEnd:float, waiter_time):
         return ((min(self.end_time, maxEnd) - self.start_time - waiter_time)**2)/2
 
-
+regular_int = r'-?\d+'
+regular_float = r'-?\d+(?:\.\d+)?'
 
 def combinations(k:float=0,n:float=0):
     """
@@ -276,6 +278,48 @@ def buckets_n_balls_terminal():
     txt += f"\nP(B) = {result[1]}"
     print(txt)
 
+def buckets_n_balls_request(text: str = None):
+    """
+    Решение задачи о n урнах с белыми и чёрными шарами, когда из каждой урны берут Ki шаров, перекладывают их в n+1 урну.
+    Функция предоставляет ответы на запросы для этой задачи
+
+    Args:
+        text (str): текст запроса, который может быть None или вводом пользователя
+    
+    Returns:
+        list: массив строчек ответа
+    """
+    if text == None:
+        return ["""Введите количество урн (число n)
+В следующих n строках введите количество белых и чёрных шаров (пара чисел через пробел) в i-ой урне
+В последних n строках введите количество шаров, забираемых из i-ой урны"""]
+    else:
+        try:
+            request = [int(parameter) for parameter in re.findall(regular_int, text)]
+
+            answer = []
+
+            box_num = request[0]
+
+            boxes = [Box(request[1+2*i], request[2+2*i], request[1+box_num*2+i]) for i in range(box_num)]
+
+            result = buckets_n_balls_solution(boxes)
+
+            answer.append("Обозначим событие A - достать Белый шар")
+
+            txt = "P(B) = "
+            for hypo in result[0]:
+                answer.append(hypo.hypo_text)
+                txt += hypo.summary_text + " + "
+            
+            answer.append(f"Обозначим событие B - достать шар из {len(boxes)+1} урны")
+            txt = txt[:-3]
+            txt += f"\nP(B) = {result[1]}"
+            answer.append(txt)
+            return answer
+        except:
+            return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
+
 def things_complexity_terminal():
     """
     Общее решение задачи о 'невнимательной секретарше' (сколько людей получат свои вещи)
@@ -327,6 +371,39 @@ def things_complexity_solution(humans:int = 0):
     
     return myTable
 
+def things_complexity_request(text: str = None):
+    """
+    Решение задачи о 'невнимательной секретарше' (сколько людей получат свои вещи)
+    WARNING: Очень неоптимизированное! Не рекоммендую пытаться решить для количества людей > 11
+
+    Args:
+        text (str): текст запроса, который может быть None или вводом пользователя
+    
+    Returns:
+        list: массив строчек ответа
+    """
+    if text == None:
+        return ["""Введите количество человек (число n)"""]
+    else:
+        try:
+            request = [int(parameter) for parameter in re.findall(regular_int, text)]
+            if len(request) == 1:
+                answer = []
+
+                humans_num = request[0]
+
+                result = things_complexity_solution(humans_num)
+
+                answer.append("Таблица:")
+
+                for cell in result.cells:
+                    answer.append(f"E = {cell.etta_value}; P = {cell.probability} ({cell.good_th}/{cell.bad_th})")
+                return answer
+            else:
+                return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
+        except:
+            return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
+
 def geometric_meeting_terminal():
     """
     Общее решение задачи о встрече двух участников
@@ -355,11 +432,108 @@ def geometric_meeting_solution(length:float = 0, firstAim:Meetiner=None, secondA
     Returns:
         float: вероятность встречи первого и второго участника
     """
-    square = ( length - max([firstAim.start_time, secondAim.start_time, 0]) - ( length - min([firstAim.end_time, secondAim.end_time, length]) ) )**2
+    square = ( length)**2
     square -= firstAim.calculate_square(length, secondAim.waiting_time)
     square -= secondAim.calculate_square(length, firstAim.waiting_time)
 
     return square/(length**2)
+
+def geometric_meeting_request(text: str = None):
+    """
+    Решение задачи о встрече двух участников
+
+    Args:
+        text (str): текст запроса, который может быть None или вводом пользователя
+    
+    Returns:
+        list: массив строчек ответа
+    """
+    if text == None:
+        return ["""Введите отрезок меры
+Введите НАЧАЛЬНЫЙ и КОНЕЧНЫЙ моменты, когда может появиться участник ПЕРВЫЙ (-1 для расширения на полный отрезок)
+Введите, сколько времени будет ждать участник ПЕРВЫЙ
+Введите НАЧАЛЬНЫЙ и КОНЕЧНЫЙ моменты, когда может появиться участник ВТОРОЙ (-1 для расширения на полный отрезок)
+Введите, сколько времени будет ждать участник ВТОРОЙ"""]
+    else:
+        try:
+            request = [float(parameter) for parameter in re.findall(regular_float, text)]
+            if len(request) == 7:
+                answer = []
+
+                ln = request[0]
+                fM = Meetiner(request[1], request[2], request[3])
+                sM = Meetiner(request[4], request[5], request[6])
+
+                result = geometric_meeting_solution(ln, fM, sM)
+
+                answer.append("Обозначим за A - участники встретятся")
+                answer.append(f"P(A) = {result}")
+
+                return answer
+            else:
+                return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
+        except:
+            return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
+
+def find_math_prediction_solution(table: EttaTable = None):
+    """
+    Нахождение МО по таблице значений случайных величин
+
+    Args:
+        table (EttaTable): таблица значений случайных величин
+    
+    Returns:
+        float: Математическое ожидание
+    """
+    if table == None:
+        return "Wrong Table"
+    else:
+        matP = 0
+        for cell in table.cells:
+            matP += cell.etta_value*cell.probability
+        return matP
+
+def find_math_prediction_terminal():
+    """
+    Нахождение МО по таблице значений случайных величин
+    """
+    n = int(input("Введите количество значений в таблице: "))
+    table = EttaTable()
+    for i in range(0, n):
+        v, p = map(int, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
+        table.cells.append(EttaTableCell(etta_value=v, probability=p))
+    print(f"Me = {find_math_prediction_solution(table)}")
+
+def find_math_prediction_request(text: str = None):
+    """
+    Нахождение МО по таблице значений случайных величин
+
+    Args:
+        text (str): текст запроса, который может быть None или вводом пользователя
+    
+    Returns:
+        list: массив строчек ответа
+    """
+    if text == None:
+        return ["""Введите количество значений таблицы (число n)
+В следующих n строчках введите пары чисел: значение СВ, вероятность (любой разделитель, кроме точки)"""]
+    else:
+        try:
+            request = [float(parameter) for parameter in re.findall(regular_float, text)]
+
+            n = int(request[0])
+            table = EttaTable()
+
+            for i in range(0, n):
+                table.cells.append(EttaTableCell(etta_value=request[1+i*2], probability=request[2+i*2]))
+
+            answer = []
+
+            answer.append(f"Me = {find_math_prediction_solution(table)}")
+
+            return answer
+        except:
+            return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
 
 __all__ = ['combinations', 'buckets_n_balls_solution', 'buckets_n_balls_terminal', 'things_complexity_solution', 'things_complexity_terminal',
 'geometric_meeting_solution', 'geometric_meeting_terminal']
