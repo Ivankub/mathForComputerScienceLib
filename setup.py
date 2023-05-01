@@ -3,7 +3,7 @@ import codecs
 
 setup(
     name='MKN_third_codes',
-    version='0.4.3',
+    version='0.4.4',
     description='Python library with standart solutions for probability tasks',
     author='Dolgun Ivan',
     author_email='vanadolgun@gmail.com',
