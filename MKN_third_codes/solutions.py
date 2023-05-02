@@ -206,7 +206,7 @@ class Meetiner():
         return ((min(self.end_time, maxEnd) - self.start_time - waiter_time)**2)/2
 
 regular_int = r'-?\d+'
-regular_float = r'-?\d+(?:\.\d+)?'
+regular_float = r'-?\d+(?:[\.\,]\d+)?'
 
 def combinations(k:float=0,n:float=0):
     """
@@ -330,6 +330,8 @@ def things_complexity_terminal():
     print("Таблица:")
     for cell in result.cells:
         print(f"E = {cell.etta_value}; P = {cell.probability} ({cell.good_th}/{cell.all_th})")
+    for cell in result.cells:
+        print(cell.good_th)
 
 def things_complexity_solution(humans:int = 0):
     """
@@ -345,9 +347,8 @@ def things_complexity_solution(humans:int = 0):
     #следующей строчкой находим количество всех перестановок
     allPerestan = math.factorial(humans)
 
+    #определяем таблицу
     myTable = EttaTable(cells=[])
-
-    #для каждой "Этта" от 0 до humans вычисляем вероятность (Этта людей получили свои вещи)
     for j in range(0, humans+1):
         myTable.cells.append(EttaTableCell(j, 0, allPerestan))
 
@@ -364,6 +365,41 @@ def things_complexity_solution(humans:int = 0):
                     goThrough(n, layer+1, used+[ticket])
 
     goThrough(0, 0, [])
+
+    #пересчёт вероятностей
+    for j in range(0, humans+1):
+        myTable.cells[j].reset_probability()
+    
+    return myTable
+
+def things_complexity_optimized_solution(humans:int = 0):
+    """
+    Оптимизированное решение задачи о 'невнимательной секретарше' (сколько людей получат свои вещи)
+    
+    Суть оптимизации:
+        На больших значениях n существует закономерность в значениях кол-ва перестановок для СВ равной от 2 до n-2, где СВ обозначает 'какое кол-во людей получили свои вещи'
+
+    Args:
+        humans (int): кол-во людей
+
+    Returns:
+        EttaTable: таблица ячеек таблицы
+    """
+    #следующей строчкой находим количество всех перестановок
+    allPerestan = math.factorial(humans)
+
+    #определяем таблицу
+    myTable = EttaTable(cells=[])
+    for j in range(0, humans+1):
+        myTable.cells.append(EttaTableCell(j, 0, allPerestan))
+
+    myTable.cells[0].good_th = int(round(math.factorial(humans)/math.e))
+    myTable.cells[1].good_th = myTable.cells[0].good_th + (-1)**(humans+1)
+    myTable.cells[-1].good_th = 1
+    myTable.cells[-2].good_th = 0
+
+    for id in range(2, humans-1):
+        myTable.cells[id].good_th = int(round(myTable.cells[id-1].good_th / id))
 
     #пересчёт вероятностей
     for j in range(0, humans+1):
@@ -398,6 +434,49 @@ def things_complexity_request(text: str = None):
 
                 for cell in result.cells:
                     answer.append(f"E = {cell.etta_value}; P = {cell.probability} ({cell.good_th}/{cell.all_th})")
+                return answer
+            else:
+                return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
+        except:
+            return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
+
+def things_complexity_optimized_request(text, maximum_full:int = 11):
+    """
+    Оптимизированное решение задачи о 'невнимательной секретарше' (сколько людей получат свои вещи)
+    WARNING: т.к. для n > maximum_full используется приблизительный подсчёт кол-ва перестановок, значения могут быть весьма неточными, если поставить maximum_full слишком низким
+
+    Суть оптимизации:
+        На больших значениях n существует закономерность в значениях кол-ва перестановок для СВ равной от 2 до n-2, где СВ обозначает 'какое кол-во людей получили свои вещи'
+
+    Args:
+        text (str): текст запроса, который может быть None или вводом пользователя
+        maximum_full (int) = 11: максимальное количсетво людей, для которых значения СВ будут считаться полностью. для запросов, где пользователь указывает n>maximum_full, функция посчитает приблизительные значения
+    
+    Returns:
+        list: массив строчек ответа
+    """
+    if text == None:
+        return ["""Введите количество человек (число n)"""]
+    else:
+        try:
+            request = [int(parameter) for parameter in re.findall(regular_int, text)]
+            if len(request) == 1:
+                answer = []
+
+                humans_num = request[0]
+                if humans_num <= maximum_full:
+                    result = things_complexity_solution(humans_num)
+                else:
+                    result = things_complexity_optimized_solution(humans_num)
+
+                answer.append("Таблица:")
+                k=0
+                for cell in result.cells:
+                    if k <= 1 or k >= humans_num-2:
+                        answer.append(f"E = {cell.etta_value}; P = {cell.probability} ({cell.good_th}/{cell.all_th})")
+                    else:
+                        answer.append(f"E = {cell.etta_value}; P ≈ {cell.probability} ({cell.good_th}/{cell.all_th})")
+                    k += 1
                 return answer
             else:
                 return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
@@ -475,7 +554,7 @@ def geometric_meeting_request(text: str = None):
         except:
             return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
 
-def find_math_prediction_solution(table: EttaTable = None, degree: float = 1):
+def find_math_prediction_solution(table: EttaTable = None, degree: float = 1, ignore_errors: bool = False):
     """
     Нахождение МО по таблице значений случайных величин
 
@@ -483,15 +562,19 @@ def find_math_prediction_solution(table: EttaTable = None, degree: float = 1):
         table (EttaTable): таблица значений случайных величин
     
     Returns:
-        float: Математическое ожидание
+        string: Математическое ожидание||'ошибка распределения'
     """
     if table == None:
         return "Wrong Table"
     else:
         matP = 0
+        total_probability = 0
         for cell in table.cells:
             matP += (cell.etta_value**degree)*cell.probability
-        return matP
+            total_probability += cell.probability
+        if total_probability != 1 and not ignore_errors:
+            return "Ошибка распределения (error code: 1)"
+        return str(matP)
 
 def find_math_prediction_terminal():
     """
@@ -500,9 +583,13 @@ def find_math_prediction_terminal():
     n = int(input("Введите количество значений в таблице: "))
     table = EttaTable()
     for i in range(0, n):
-        v, p = map(int, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
+        v, p = map(float, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
         table.cells.append(EttaTableCell(etta_value=v, probability=p))
-    print(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {find_math_prediction_solution(table)}")
+    result = find_math_prediction_solution(table)
+    if "ошибка" not in result.lower():
+        print(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {result}")
+    else:
+        print(result)
 
 def find_math_prediction_request(text: str = None):
     """
@@ -529,7 +616,11 @@ def find_math_prediction_request(text: str = None):
 
             answer = []
 
-            answer.append(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {find_math_prediction_solution(table)}")
+            result = find_math_prediction_solution(table)
+            if "ошибка" not in result.lower():
+                answer.append(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {find_math_prediction_solution(table)}")
+            else:
+                answer.append(result)
 
             return answer
         except:
@@ -543,14 +634,17 @@ def find_dispersion_solution(table: EttaTable):
         table (EttaTable): таблица СВ
 
     Returns:
-        float: дисперсия СВ
+        string: дисперсия СВ/ошибка
     """
     if table != None:
         summ = 0
         math_prediction = find_math_prediction_solution(table, 1)
-        for cell in table.cells:
-            summ += (cell.etta_value - math_prediction)**2 * cell.probability
-        return summ
+        if "ошибка" not in math_prediction.lower():
+            for cell in table.cells:
+                summ += (cell.etta_value - float(math_prediction))**2 * cell.probability
+            return str(summ)
+        else:
+            return "Ошибка при вычислении мат. ожидания. Проверьте коррекность введённых данных. (error code: 1)"
 
 def find_dispersion_terminal():
     """
@@ -559,9 +653,13 @@ def find_dispersion_terminal():
     n = int(input("Введите количество значений в таблице: "))
     table = EttaTable()
     for i in range(0, n):
-        v, p = map(int, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
+        v, p = map(float, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
         table.cells.append(EttaTableCell(etta_value=v, probability=p))
-    print(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {find_dispersion_solution(table)}")
+    result = find_dispersion_solution(table)
+    if "ошибка" not in result.lower():
+        print(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {result}")
+    else:
+        print(result)
 
 def find_dispersion_request(text: str = None):
     """
@@ -588,7 +686,11 @@ def find_dispersion_request(text: str = None):
 
             answer = []
 
-            answer.append(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {find_dispersion_solution(table)}")
+            result = find_dispersion_solution(table)
+            if "ошибка" not in result.lower():
+                answer.append(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {result}")
+            else:
+                answer.append(result)
 
             return answer
         except:
@@ -616,10 +718,18 @@ def table_analysis_terminal():
     n = int(input("Введите количество значений в таблице: "))
     table = EttaTable()
     for i in range(0, n):
-        v, p = map(int, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
-        table.cells.append(EttaTableCell(etta_value=v, probability=p))
+        v, p = map(float, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения: ").split())
+        table.cells.append(EttaTableCell(etta_value=v, probability=max(p,0)))
+        
     result = table_analysis_solution(table)
-    print(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {result[0]}\nDx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {result[1]}")
+
+    if "ошибка" not in result[0].lower() and "ошибка" not in result[1].lower():
+        print(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {result[0]}\nDx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {result[1]}")
+    else:
+        print("Возникла ошибка при вычислении. Проверьте коррекность введённых данных.")
+        print("Дополнительная информация об ошибке:")
+        print(result[0])
+        print(result[1])
 
 def table_analysis_request(text: str = None):
     """
@@ -637,18 +747,25 @@ def table_analysis_request(text: str = None):
     else:
         try:
             request = [float(parameter) for parameter in re.findall(regular_float, text)]
-
+            print(request)
             n = int(request[0])
             table = EttaTable()
 
             for i in range(0, n):
-                table.cells.append(EttaTableCell(etta_value=request[1+i*2], probability=request[2+i*2]))
+                table.cells.append(EttaTableCell(etta_value=request[1+i*2], probability=max(request[2+i*2],0)))
+                print(table.cells[i].probability, table.cells[i].etta_value)
 
             answer = []
             result = table_analysis_solution(table)
-            answer.append(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {result[0]}")
-            answer.append(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {result[1]}")
-
+            
+            if "ошибка" not in result[0].lower() and "ошибка" not in result[1].lower():
+                answer.append(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {result[0]}")
+                answer.append(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {result[1]}")
+            else:
+                answer.append("Возникла ошибка при вычислении. Проверьте коррекность введённых данных.")
+                answer.append("Дополнительная информация об ошибке:")
+                answer.append(result[0])
+                answer.append(result[1])
             return answer
         except:
             return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
