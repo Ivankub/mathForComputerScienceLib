@@ -1,4 +1,4 @@
-from mkn_globals import combinations
+from .mkn_globals import combinations
 
 class Box():
     """

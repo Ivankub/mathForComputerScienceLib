@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: MKN-third-codes
-Version: 0.6.4.2
+Version: 0.6.4.3
 Summary: Python library with standart solutions for probability tasks
 Author: Dolgun Ivan
 Author-email: vanadolgun@gmail.com
@@ -61,6 +61,12 @@ License-File: LICENSE.txt
 ## Change Log
 ====================
 
+## 0.6.4.3 (02/05/2023)
+```
+------------------
+━ Да как нормально настроить импорты???
+------------------
+```
 ## 0.6.4.2 (02/05/2023)
 ```
 ------------------
