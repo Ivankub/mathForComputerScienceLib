@@ -1,7 +1,7 @@
 import math
 import re
-import constructions.mkn_utils as utl
-from constructions.mkn_globals import regular_int, regular_float
+from . import mkn_utils as utl
+from . import mkn_globals as glb
 
 def buckets_n_balls_solution(boxes):
     """
@@ -75,13 +75,13 @@ def buckets_n_balls_request(text: str = None):
 В последних n строках введите количество шаров, забираемых из i-ой урны"""]
     else:
         try:
-            request = [int(parameter) for parameter in re.findall(regular_int, text)]
+            request = [int(parameter) for parameter in re.findall(glb.regular_int, text)]
 
             answer = []
 
             box_num = request[0]
 
-            boxes = [utl.Box(request[1+2*i], request[2+2*i], request[1+box_num*2+i]) for i in range(box_num)]
+            boxes = [Box(request[1+2*i], request[2+2*i], request[1+box_num*2+i]) for i in range(box_num)]
 
             result = buckets_n_balls_solution(boxes)
 
@@ -122,7 +122,7 @@ def things_complexity_solution(humans:int = 0):
         humans (int): кол-во людей
 
     Returns:
-        utl.EttaTable: таблица ячеек таблицы
+        EttaTable: таблица ячеек таблицы
     """
     #следующей строчкой находим количество всех перестановок
     allPerestan = math.factorial(humans)
@@ -163,7 +163,7 @@ def things_complexity_optimized_solution(humans:int = 0):
         humans (int): кол-во людей
 
     Returns:
-        utl.EttaTable: таблица ячеек таблицы
+        EttaTable: таблица ячеек таблицы
     """
     #следующей строчкой находим количество всех перестановок
     allPerestan = math.factorial(humans)
@@ -268,11 +268,11 @@ def geometric_meeting_terminal():
     Общее решение задачи о встрече двух участников
     """
     ln = float(input("Введите отрезок меры: "))
-    fM = utl.Meetiner(float(input("Введите начальный момент, когда может появиться участник первый (-1 для расширения на полный отрезок): ")), 
+    fM = Meetiner(float(input("Введите начальный момент, когда может появиться участник первый (-1 для расширения на полный отрезок): ")), 
     float(input("Введите конечный момент, когда может появиться участник первый (-1 для расширения на полный отрезок): ")), 
     float(input("Введите, сколько времени будет ждать участник первый: ")))
 
-    sM = utl.Meetiner(float(input("Введите начальный момент, когда может появиться участник второй (-1 для расширения на полный отрезок): ")), 
+    sM = Meetiner(float(input("Введите начальный момент, когда может появиться участник второй (-1 для расширения на полный отрезок): ")), 
     float(input("Введите конечный момент, когда может появиться участник второй (-1 для расширения на полный отрезок): ")), 
     float(input("Введите, сколько времени будет ждать участник второй: ")))
 
@@ -320,8 +320,8 @@ def geometric_meeting_request(text: str = None):
                 answer = []
 
                 ln = request[0]
-                fM = utl.Meetiner(request[1], request[2], request[3])
-                sM = utl.Meetiner(request[4], request[5], request[6])
+                fM = Meetiner(request[1], request[2], request[3])
+                sM = Meetiner(request[4], request[5], request[6])
 
                 result = geometric_meeting_solution(ln, fM, sM)
 
@@ -361,10 +361,10 @@ def find_math_prediction_terminal():
     Нахождение МО по таблице значений случайных величин
     """
     n = int(input("Введите количество значений в таблице: "))
-    table = utl.EttaTable()
+    table = EttaTable()
     for i in range(0, n):
         v, p = map(float, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
-        table.cells.append(utl.EttaTableCell(etta_value=v, probability=p))
+        table.cells.append(EttaTableCell(etta_value=v, probability=p))
     result = find_math_prediction_solution(table)
     if "ошибка" not in result.lower():
         print(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {result}")
@@ -389,10 +389,10 @@ def find_math_prediction_request(text: str = None):
             request = [float(parameter) for parameter in re.findall(regular_float, text)]
 
             n = int(request[0])
-            table = utl.EttaTable()
+            table = EttaTable()
 
             for i in range(0, n):
-                table.cells.append(utl.EttaTableCell(etta_value=request[1+i*2], probability=request[2+i*2]))
+                table.cells.append(EttaTableCell(etta_value=request[1+i*2], probability=request[2+i*2]))
 
             answer = []
 
@@ -431,10 +431,10 @@ def find_dispersion_terminal():
     Функция, считающая дисперсию для таблицы СВ
     """
     n = int(input("Введите количество значений в таблице: "))
-    table = utl.EttaTable()
+    table = EttaTable()
     for i in range(0, n):
         v, p = map(float, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения").split())
-        table.cells.append(utl.EttaTableCell(etta_value=v, probability=p))
+        table.cells.append(EttaTableCell(etta_value=v, probability=p))
     result = find_dispersion_solution(table)
     if "ошибка" not in result.lower():
         print(f"Dx = ⁱ⁼¹∑ⁿ( (xi - M(X))² pi ) = {result}")
@@ -459,10 +459,10 @@ def find_dispersion_request(text: str = None):
             request = [float(parameter) for parameter in re.findall(regular_float, text)]
 
             n = int(request[0])
-            table = utl.EttaTable()
+            table = EttaTable()
 
             for i in range(0, n):
-                table.cells.append(utl.EttaTableCell(etta_value=request[1+i*2], probability=request[2+i*2]))
+                table.cells.append(EttaTableCell(etta_value=request[1+i*2], probability=request[2+i*2]))
 
             answer = []
 
@@ -496,10 +496,10 @@ def table_analysis_terminal():
     Функция, считающая дисперсию и математическое ожидание для таблицы СВ
     """
     n = int(input("Введите количество значений в таблице: "))
-    table = utl.EttaTable()
+    table = EttaTable()
     for i in range(0, n):
         v, p = map(float, input(f"введите пару чисел (значение, вероятность) для {i+1}-го значения: ").split())
-        table.cells.append(utl.EttaTableCell(etta_value=v, probability=max(p,0)))
+        table.cells.append(EttaTableCell(etta_value=v, probability=max(p,0)))
         
     result = table_analysis_solution(table)
 
@@ -529,10 +529,10 @@ def table_analysis_request(text: str = None):
             request = [float(parameter) for parameter in re.findall(regular_float, text)]
             print(request)
             n = int(request[0])
-            table = utl.EttaTable()
+            table = EttaTable()
 
             for i in range(0, n):
-                table.cells.append(utl.EttaTableCell(etta_value=request[1+i*2], probability=max(request[2+i*2],0)))
+                table.cells.append(EttaTableCell(etta_value=request[1+i*2], probability=max(request[2+i*2],0)))
                 print(table.cells[i].probability, table.cells[i].etta_value)
 
             answer = []

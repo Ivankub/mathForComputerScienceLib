@@ -1,13 +1,12 @@
 from setuptools import setup
-import codecs
 
 setup(
     name='MKN_third_codes',
-    version='0.6.4.5',
+    version='0.6.5.4',
     description='Python library with standart solutions for probability tasks',
     author='Dolgun Ivan',
     author_email='vanadolgun@gmail.com',
-    packages=['MKN_third_codes/'],
+    packages=['mfcn'],
     license='MIT',
     long_description= open('./README.md', 'r', encoding="utf-8").read() + '\n#\n' + open('./CHANGELOG.md', 'r', encoding="utf-8").read(),
     long_description_content_type='text/markdown'
