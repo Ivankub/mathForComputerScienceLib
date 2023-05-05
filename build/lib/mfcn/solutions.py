@@ -476,7 +476,7 @@ def find_dispersion_request(text: str = None):
         except:
             return ["""Возникла ошибка при обработке введённых данных. Проверьте правильность ввода."""]
 
-def table_analysis_solution(table: utl.EttaTable):
+def table_analysis_solution(table: utl.EttaTable, degree: float = 1):
     """
     Находит Мx и Dx для таблицы значений СВ
 
@@ -486,7 +486,7 @@ def table_analysis_solution(table: utl.EttaTable):
     Returns:
         list: [float, float] - массив со значениями Mx и Dx
     """
-    mat_prediction = find_math_prediction_solution(table)
+    mat_prediction = find_math_prediction_solution(table, degree)
     dispersion = find_dispersion_solution(table)
 
     return [mat_prediction, dispersion]
@@ -533,8 +533,13 @@ def table_analysis_request(text: str = None):
             for i in range(0, n):
                 table.cells.append(utl.EttaTableCell(etta_value=request[1+i*2], probability=max(request[2+i*2],0)))
 
+            degree = 1
+
+            if len(request) == 2*n+2:
+                degree = request[-1]
+            
             answer = []
-            result = table_analysis_solution(table)
+            result = table_analysis_solution(table, degree)
             
             if "ошибка" not in result[0].lower() and "ошибка" not in result[1].lower():
                 answer.append(f"Mx = ⁱ⁼¹∑ⁿ(xi * pi) = {result[0]}")
