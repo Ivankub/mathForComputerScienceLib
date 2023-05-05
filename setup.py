@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='MKN_third_codes',
-    version='0.6.6.2',
+    version='0.6.6.3',
     description='Python library with standart solutions for probability tasks',
     author='Dolgun Ivan',
     author_email='vanadolgun@gmail.com',
